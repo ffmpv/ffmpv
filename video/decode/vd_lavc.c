@@ -61,8 +61,6 @@ static void init_avctx(struct dec_video *vd, const char *decoder,
 static void uninit_avctx(struct dec_video *vd);
 
 static int get_buffer2_direct(AVCodecContext *avctx, AVFrame *pic, int flags);
-static enum AVPixelFormat get_format_hwdec(struct AVCodecContext *avctx,
-                                           const enum AVPixelFormat *pix_fmt);
 
 #define OPT_BASE_STRUCT struct vd_lavc_params
 
@@ -586,8 +584,6 @@ static void init_avctx(struct dec_video *vd, const char *decoder,
         avctx->hwaccel_flags |= AV_HWACCEL_FLAG_IGNORE_LEVEL;
         if (!lavc_param->check_hw_profile)
             avctx->hwaccel_flags |= AV_HWACCEL_FLAG_ALLOW_PROFILE_MISMATCH;
-        if (ctx->hwdec->image_format)
-            avctx->get_format = get_format_hwdec;
         if (ctx->hwdec->generic_hwaccel) {
             ctx->hwdec_dev = hwdec_create_dev(vd, ctx->hwdec, false);
             if (!ctx->hwdec_dev)
@@ -695,151 +691,6 @@ static void uninit_avctx(struct dec_video *vd)
     ctx->hwdec_fail_count = 0;
     ctx->max_delay_queue = 0;
     ctx->hw_probing = false;
-}
-
-static int init_generic_hwaccel(struct dec_video *vd, enum AVPixelFormat hw_fmt)
-{
-    struct lavc_ctx *ctx = vd->priv;
-    struct vd_lavc_hwdec *hwdec = ctx->hwdec;
-    AVBufferRef *new_frames_ctx = NULL;
-
-    if (!ctx->hwdec_dev)
-        goto error;
-
-    if (!hwdec->set_hwframes)
-        return 0;
-
-    if (!ctx->hwdec_dev->av_device_ref) {
-        MP_ERR(ctx, "Missing device context.\n");
-        goto error;
-    }
-
-    if (avcodec_get_hw_frames_parameters(ctx->avctx,
-            ctx->hwdec_dev->av_device_ref, hw_fmt, &new_frames_ctx) < 0)
-    {
-        MP_VERBOSE(ctx, "Hardware decoding of this stream is unsupported?\n");
-        goto error;
-    }
-
-    AVHWFramesContext *new_fctx = (void *)new_frames_ctx->data;
-
-    if (hwdec->image_format == IMGFMT_VIDEOTOOLBOX)
-        new_fctx->sw_format = imgfmt2pixfmt(vd->opts->videotoolbox_format);
-    if (vd->opts->hwdec_image_format)
-        new_fctx->sw_format = imgfmt2pixfmt(vd->opts->hwdec_image_format);
-
-    // The video output might not support all formats.
-    // Note that supported_formats==NULL means any are accepted.
-    int *render_formats = ctx->hwdec_dev->supported_formats;
-    if (render_formats) {
-        int mp_format = pixfmt2imgfmt(new_fctx->sw_format);
-        bool found = false;
-        for (int n = 0; render_formats[n]; n++) {
-            if (render_formats[n] == mp_format) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            MP_WARN(ctx, "Surface format %s not supported for direct rendering.\n",
-                    mp_imgfmt_to_name(mp_format));
-            goto error;
-        }
-    }
-
-    // 1 surface is already included by libavcodec. The field is 0 if the
-    // hwaccel supports dynamic surface allocation.
-    if (new_fctx->initial_pool_size)
-        new_fctx->initial_pool_size += HWDEC_EXTRA_SURFACES - 1;
-
-    if (ctx->hwdec->hwframes_refine)
-        ctx->hwdec->hwframes_refine(ctx, new_frames_ctx);
-
-    // We might be able to reuse a previously allocated frame pool.
-    if (ctx->cached_hw_frames_ctx) {
-        AVHWFramesContext *old_fctx = (void *)ctx->cached_hw_frames_ctx->data;
-
-        if (new_fctx->format            != old_fctx->format ||
-            new_fctx->sw_format         != old_fctx->sw_format ||
-            new_fctx->width             != old_fctx->width ||
-            new_fctx->height            != old_fctx->height ||
-            new_fctx->initial_pool_size != old_fctx->initial_pool_size)
-            av_buffer_unref(&ctx->cached_hw_frames_ctx);
-    }
-
-    if (!ctx->cached_hw_frames_ctx) {
-        if (av_hwframe_ctx_init(new_frames_ctx) < 0) {
-            MP_ERR(ctx, "Failed to allocate hw frames.\n");
-            goto error;
-        }
-
-        ctx->cached_hw_frames_ctx = new_frames_ctx;
-        new_frames_ctx = NULL;
-    }
-
-    ctx->avctx->hw_frames_ctx = av_buffer_ref(ctx->cached_hw_frames_ctx);
-    if (!ctx->avctx->hw_frames_ctx)
-        goto error;
-
-    av_buffer_unref(&new_frames_ctx);
-    return 0;
-
-error:
-    av_buffer_unref(&new_frames_ctx);
-    av_buffer_unref(&ctx->cached_hw_frames_ctx);
-    return -1;
-}
-
-static enum AVPixelFormat get_format_hwdec(struct AVCodecContext *avctx,
-                                           const enum AVPixelFormat *fmt)
-{
-    struct dec_video *vd = avctx->opaque;
-    vd_ffmpeg_ctx *ctx = vd->priv;
-
-    MP_VERBOSE(vd, "Pixel formats supported by decoder:");
-    for (int i = 0; fmt[i] != AV_PIX_FMT_NONE; i++)
-        MP_VERBOSE(vd, " %s", av_get_pix_fmt_name(fmt[i]));
-    MP_VERBOSE(vd, "\n");
-
-    const char *profile = avcodec_profile_name(avctx->codec_id, avctx->profile);
-    MP_VERBOSE(vd, "Codec profile: %s (0x%x)\n", profile ? profile : "unknown",
-               avctx->profile);
-
-    assert(ctx->hwdec);
-
-    ctx->hwdec_request_reinit |= ctx->hwdec_failed;
-    ctx->hwdec_failed = false;
-
-    enum AVPixelFormat select = AV_PIX_FMT_NONE;
-    for (int i = 0; fmt[i] != AV_PIX_FMT_NONE; i++) {
-        if (ctx->hwdec->image_format == pixfmt2imgfmt(fmt[i])) {
-            if (ctx->hwdec->generic_hwaccel) {
-                if (init_generic_hwaccel(vd, fmt[i]) < 0)
-                    break;
-            } else {
-                ctx->hwdec_request_reinit = false;
-                if (ctx->hwdec->init_decoder && ctx->hwdec->init_decoder(ctx) < 0)
-                    break;
-            }
-            select = fmt[i];
-            break;
-        }
-    }
-
-    if (select == AV_PIX_FMT_NONE) {
-        ctx->hwdec_failed = true;
-        for (int i = 0; fmt[i] != AV_PIX_FMT_NONE; i++) {
-            const AVPixFmtDescriptor *d = av_pix_fmt_desc_get(fmt[i]);
-            if (d && !(d->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
-                select = fmt[i];
-                break;
-            }
-        }
-    }
-
-    const char *name = av_get_pix_fmt_name(select);
-    MP_VERBOSE(vd, "Requesting pixfmt '%s' from decoder.\n", name ? name : "-");
-    return select;
 }
 
 static int get_buffer2_direct(AVCodecContext *avctx, AVFrame *pic, int flags)
