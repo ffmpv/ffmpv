@@ -99,7 +99,7 @@ Essential dependencies (incomplete list):
   libGL, GLX, EGL, xv, ...)
 - Audio output development headers (libasound/ALSA, pulseaudio)
 - FFmpeg libraries (libavutil libavcodec libavformat libswscale libavfilter
-  and either libswresample) from FFmpeg
+  and libswresample) from FFmpeg
 - zlib
 - iconv (normally provided by the system libc)
 - libass (OSD, OSC, text subtitles)
