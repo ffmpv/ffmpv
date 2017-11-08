@@ -427,8 +427,8 @@ iconv support use --disable-iconv.",
 
 ffmpeg_pkg_config_checks = [
     'libavutil',     '>= 56.0.100',
-    'libavcodec',    '>= 58.2.100',
-    'libavformat',   '>= 58.0.102',
+    'libavcodec',    '>= 58.0.100',
+    'libavformat',   '>= 58.0.100',
     'libswscale',    '>= 5.0.101',
     'libavfilter',   '>= 7.0.101',
     'libswresample', '>= 3.0.100',
@@ -471,7 +471,6 @@ libav_dependencies = [
         'func': check_statement('libavcodec/version.h',
                                 'int x[LIBAVCODEC_VERSION_MICRO >= 100 ? 1 : -1]',
                                 use='libavcodec'),
-        'default': 'disable',
     }, {
         # This check should always result in the opposite of ffmpeg-*.
         # Run it to make sure is_ffmpeg didn't fail for some other reason than
