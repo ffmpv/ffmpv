@@ -1,4 +1,4 @@
-![http://mpv.io/](https://raw.githubusercontent.com/mpv-player/mpv.io/master/source/images/mpv-logo-128.png)
+![http://mpv.io/](https://raw.githubusercontent.com/ffmpv/ffmpv.io/master/source/images/mpv-logo-128.png)
 
 ## mpv
 
@@ -13,8 +13,8 @@
 * [Bug reports](#bug-reports)
 * [Contributing](#contributing)
 * [Relation to MPlayer and mplayer2](#relation-to-mplayer-and-mplayer2)
-* [Wiki](https://github.com/mpv-player/mpv/wiki)
-* [FAQ](https://github.com/mpv-player/mpv/wiki/FAQ)
+* [Wiki](https://github.com/ffmpv/ffmpv/wiki)
+* [FAQ](https://github.com/ffmpv/ffmpv/wiki/FAQ)
 * [Man pages](http://mpv.io/manual/master/)
 * [Contact](#contact)
 * [License](#license)
@@ -177,8 +177,8 @@ For small changes you can just send us pull requests through GitHub. For bigger
 changes come and talk to us on IRC before you start working on them. It will
 make code review easier for both parties later on.
 
-You can check [the wiki](https://github.com/mpv-player/mpv/wiki/Stuff-to-do)
-or the [issue tracker](https://github.com/mpv-player/mpv/issues?q=is%3Aopen+is%3Aissue+label%3A%22feature+request%22)
+You can check [the wiki](https://github.com/ffmpv/ffmpv/wiki/Stuff-to-do)
+or the [issue tracker](https://github.com/ffmpv/ffmpv/issues?q=is%3Aopen+is%3Aissue+label%3A%22feature+request%22)
 for ideas on what you could contribute with.
 
 ## Relation to MPlayer and mplayer2
@@ -186,7 +186,7 @@ for ideas on what you could contribute with.
 mpv is a fork of MPlayer. Much has changed, and in general, mpv should be
 considered a completely new program, rather than a MPlayer drop-in replacement.
 
-For details see [FAQ entry](https://github.com/mpv-player/mpv/wiki/FAQ#How_is_mpv_related_to_MPlayer).
+For details see [FAQ entry](https://github.com/ffmpv/ffmpv/wiki/FAQ#How_is_mpv_related_to_MPlayer).
 
 If you are wondering what's different from mplayer2 and MPlayer, an incomplete
 and largely unmaintained list of changes is located [here][mplayer-changes].
@@ -194,7 +194,7 @@ and largely unmaintained list of changes is located [here][mplayer-changes].
 ## License
 
 GPLv2 "or later" by default, LGPLv2.1 "or later" with `--enable-lgpl`.
-See [details.](https://github.com/mpv-player/mpv/blob/master/Copyright)
+See [details.](https://github.com/ffmpv/ffmpv/blob/master/Copyright)
 
 
 ## Contact
@@ -209,14 +209,12 @@ Most activity happens on the IRC channel and the github issue tracker.
 To contact the `mpv` team in private write to `mpv-team@googlegroups.com`. Use
 only if discretion is required.
 
-[releases]: https://github.com/mpv-player/mpv/releases
-[mpv-build]: https://github.com/mpv-player/mpv-build
-[homebrew-mpv]: https://github.com/mpv-player/homebrew-mpv
-[issue-tracker]:  https://github.com/mpv-player/mpv/issues
-[release-policy]: https://github.com/mpv-player/mpv/blob/master/DOCS/release-policy.md
-[windows_compilation]: https://github.com/mpv-player/mpv/blob/master/DOCS/compile-windows.md
-[mplayer-changes]: https://github.com/mpv-player/mpv/blob/master/DOCS/mplayer-changes.rst
-[interface-changes]: https://github.com/mpv-player/mpv/blob/master/DOCS/interface-changes.rst
-[api-changes]: https://github.com/mpv-player/mpv/blob/master/DOCS/client-api-changes.rst
-[restore-old-bindings]: https://github.com/mpv-player/mpv/blob/master/etc/restore-old-bindings.conf
-[contribute.md]: https://github.com/mpv-player/mpv/blob/master/DOCS/contribute.md
+[releases]: https://github.com/ffmpv/ffmpv/releases
+[issue-tracker]:  https://github.com/ffmpv/ffmpv/issues
+[release-policy]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/release-policy.md
+[windows_compilation]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/compile-windows.md
+[mplayer-changes]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/mplayer-changes.rst
+[interface-changes]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/interface-changes.rst
+[api-changes]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/client-api-changes.rst
+[restore-old-bindings]: https://github.com/ffmpv/ffmpv/blob/master/etc/restore-old-bindings.conf
+[contribute.md]: https://github.com/ffmpv/ffmpv/blob/master/DOCS/contribute.md
