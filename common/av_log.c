@@ -42,17 +42,9 @@
 #include <libavdevice/avdevice.h>
 #endif
 
-#if HAVE_LIBAV
-#include <libavresample/avresample.h>
-#else
 #include <libswresample/swresample.h>
-#endif
 
-#if LIBAVCODEC_VERSION_MICRO >= 100
 #define LIB_PREFIX "ffmpeg"
-#else
-#define LIB_PREFIX "libav"
-#endif
 
 // Needed because the av_log callback does not provide a library-safe message
 // callback.
@@ -196,11 +188,7 @@ bool print_libav_versions(struct mp_log *log, int v)
         {"libavformat",   LIBAVFORMAT_VERSION_INT,   avformat_version()},
         {"libswscale",    LIBSWSCALE_VERSION_INT,    swscale_version()},
         {"libavfilter",   LIBAVFILTER_VERSION_INT,   avfilter_version()},
-#if HAVE_LIBAV
-        {"libavresample", LIBAVRESAMPLE_VERSION_INT, avresample_version()},
-#else
         {"libswresample", LIBSWRESAMPLE_VERSION_INT, swresample_version()},
-#endif
     };
 
     mp_msg(log, v, "%s library versions:\n", LIB_PREFIX);

@@ -33,12 +33,6 @@
 #include "fmt-conversion.h"
 #include "format.h"
 
-#define HAVE_LIBSWRESAMPLE (!HAVE_LIBAV)
-#define HAVE_LIBAVRESAMPLE HAVE_LIBAV
-
-#if HAVE_LIBAVRESAMPLE
-#include <libavresample/avresample.h>
-#elif HAVE_LIBSWRESAMPLE
 #include <libswresample/swresample.h>
 #define AVAudioResampleContext SwrContext
 #define avresample_alloc_context swr_alloc
@@ -50,9 +44,6 @@
     swr_convert(ctx, out, out_samples, (const uint8_t**)(in), in_samples)
 #define avresample_set_channel_mapping swr_set_channel_mapping
 #define avresample_set_compensation swr_set_compensation
-#else
-#error "config.h broken or no resampler found"
-#endif
 
 struct mp_aconverter {
     struct mp_log *log;
@@ -86,17 +77,6 @@ struct mp_aconverter {
     bool output_eof;            // queued output EOF
 };
 
-#if HAVE_LIBAVRESAMPLE
-static double get_delay(struct mp_aconverter *p)
-{
-    return avresample_get_delay(p->avrctx) / (double)p->in_rate +
-           avresample_available(p->avrctx) / (double)p->out_rate;
-}
-static int get_out_samples(struct mp_aconverter *p, int in_samples)
-{
-    return avresample_get_out_samples(p->avrctx, in_samples);
-}
-#else
 static double get_delay(struct mp_aconverter *p)
 {
     int64_t base = p->in_rate * (int64_t)p->out_rate;
@@ -106,7 +86,6 @@ static int get_out_samples(struct mp_aconverter *p, int in_samples)
 {
     return swr_get_out_samples(p->avrctx, in_samples);
 }
-#endif
 
 static void close_lavrr(struct mp_aconverter *p)
 {
@@ -217,11 +196,7 @@ static bool configure_lavrr(struct mp_aconverter *p, bool verbose)
     int normalize = p->opts->normalize;
     if (normalize < 0)
         normalize = global_normalize;
-#if HAVE_LIBSWRESAMPLE
     av_opt_set_double(p->avrctx, "rematrix_maxval", normalize ? 1 : 1000, 0);
-#else
-    av_opt_set_int(p->avrctx, "normalize_mix_level", !!normalize, 0);
-#endif
 
     if (mp_set_avopts(p->log, p->avrctx, p->opts->avopts) < 0)
         goto error;
@@ -325,7 +300,7 @@ static bool configure_lavrr(struct mp_aconverter *p, bool verbose)
     p->is_resampling = false;
 
     if (avresample_open(p->avrctx) < 0 || avresample_open(p->avrctx_out) < 0) {
-        MP_ERR(p, "Cannot open Libavresample Context. \n");
+        MP_ERR(p, "Cannot open Libswresample Context. \n");
         goto error;
     }
     return true;
@@ -361,13 +336,9 @@ void mp_aconverter_flush(struct mp_aconverter *p)
 {
     if (!p->avrctx)
         return;
-#if HAVE_LIBSWRESAMPLE
     swr_close(p->avrctx);
     if (swr_init(p->avrctx) < 0)
         close_lavrr(p);
-#else
-    while (avresample_read(p->avrctx, NULL, 1000) > 0) {}
-#endif
 }
 
 void mp_aconverter_set_speed(struct mp_aconverter *p, double speed)

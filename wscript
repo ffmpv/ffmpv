@@ -433,64 +433,18 @@ ffmpeg_pkg_config_checks = [
     'libavfilter',   '>= 7.0.101',
     'libswresample', '>= 3.0.100',
 ]
-libav_pkg_config_checks = [
-    'libavutil',     '>= 56.6.0',
-    'libavcodec',    '>= 58.5.0',
-    'libavformat',   '>= 58.1.0',
-    'libswscale',    '>= 5.0.0',
-    'libavfilter',   '>= 7.0.0',
-    'libavresample', '>= 4.0.0',
-]
 
-def check_ffmpeg_or_libav_versions():
+def check_ffmpeg_versions():
     def fn(ctx, dependency_identifier, **kw):
         versions = ffmpeg_pkg_config_checks
-        if ctx.dependency_satisfied('libav'):
-            versions = libav_pkg_config_checks
         return check_pkg_config(*versions)(ctx, dependency_identifier, **kw)
     return fn
 
-libav_dependencies = [
+ffmpeg_dependencies = [
     {
-        'name': 'libavcodec',
-        'desc': 'FFmpeg/Libav present',
-        'func': check_pkg_config('libavcodec'),
-        'req': True,
-        'fmsg': "FFmpeg/Libav development files not found.",
-    }, {
-        'name': 'ffmpeg-mpv',
-        'desc': 'libav* is FFmpeg mpv modified version',
-        'func': check_statement('libavcodec/version.h',
-                                'int x[LIBAVCODEC_MPV ? 1 : -1]',
-                                use='libavcodec')
-    }, {
-        'name': '--ffmpeg-upstream',
-        'deps': '!ffmpeg-mpv',
-        'desc': 'libav* is upstream FFmpeg (unsupported)',
-        # FFmpeg <=> LIBAVUTIL_VERSION_MICRO>=100
-        'func': check_statement('libavcodec/version.h',
-                                'int x[LIBAVCODEC_VERSION_MICRO >= 100 ? 1 : -1]',
-                                use='libavcodec'),
-    }, {
-        # This check should always result in the opposite of ffmpeg-*.
-        # Run it to make sure is_ffmpeg didn't fail for some other reason than
-        # the actual version check.
-        'name': 'libav',
-        'desc': 'libav* is Libav',
-        # FFmpeg <=> LIBAVUTIL_VERSION_MICRO>=100
-        'func': check_statement('libavcodec/version.h',
-                                'int x[LIBAVCODEC_VERSION_MICRO >= 100 ? -1 : 1]',
-                                use='libavcodec')
-    }, {
-        'name': 'libav-any',
-        'desc': 'Libav/FFmpeg library versions',
-        'deps': 'ffmpeg-mpv || ffmpeg-upstream || libav',
-        'func': check_ffmpeg_or_libav_versions(),
-        'req': True,
-        'fmsg': "Unable to find development files for some of the required \
-FFmpeg/Libav libraries. You need git master. For FFmpeg, the mpv fork, that \
-might contain additional fixes and features is required. It is available on \
-https://github.com/mpv-player/ffmpeg-mpv Aborting."
+        'name': 'ffmpeg',
+        'desc': 'libav* is FFmpeg',
+        'func': check_ffmpeg_versions(),
     }, {
         'name': '--libavdevice',
         'desc': 'libavdevice',
@@ -963,7 +917,7 @@ def options(opt):
         help    = 'variant name for saving configuration and build results')
 
     opt.parse_features('build and install options', build_options)
-    optional_features = main_dependencies + libav_dependencies
+    optional_features = main_dependencies + ffmpeg_dependencies
     opt.parse_features('optional features', optional_features)
     opt.parse_features('audio outputs',     audio_output_features)
     opt.parse_features('video outputs',     video_output_features)
@@ -1026,7 +980,7 @@ def configure(ctx):
     ctx.parse_dependencies(main_dependencies)
     ctx.parse_dependencies(audio_output_features)
     ctx.parse_dependencies(video_output_features)
-    ctx.parse_dependencies(libav_dependencies)
+    ctx.parse_dependencies(ffmpeg_dependencies)
     ctx.parse_dependencies(hwaccel_features)
     ctx.parse_dependencies(radio_and_tv_features)
 
