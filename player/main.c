@@ -433,7 +433,7 @@ int mp_initialize(struct MPContext *mpctx, char **options)
         // a bad idea. We don't acknowledge its usefulness and stability.
         print_libav_versions(mpctx->log, MSGL_FATAL);
         MP_FATAL(mpctx, "\nmpv was compiled against a different version of "
-                 "FFmpeg/Libav than the shared\nlibrary it is linked against. "
+                 "FFmpeg than the shared\nlibrary it is linked against. "
                  "This is most likely a broken build and could\nresult in "
                  "misbehavior and crashes.\n\nmpv does not support this "
                  "configuration and will not run - rebuild mpv instead.\n");

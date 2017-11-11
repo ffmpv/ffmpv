@@ -2122,9 +2122,8 @@ Property list
 ``ffmpeg-version``
     Return the contents of the ``av_version_info()`` API call. This is a string
     which identifies the build in some way, either through a release version
-    number, or a git hash. This applies to Libav as well (the property is
-    still named the same.) This property is unavailable if mpv is linked against
-    older FFmpeg and Libav versions.
+    number, or a git hash. This property is unavailable if mpv is linked against
+    older FFmpeg version.
 
 ``options/<name>`` (RW)
     Read-only access to value of option ``--<name>``. Most options can be

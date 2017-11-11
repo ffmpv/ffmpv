@@ -51,8 +51,7 @@ Available filters are:
         Whether to normalize when remixing channel layouts (default: auto).
         ``auto`` uses the value set by ``--audio-normalize-downmix``.
     ``o=<string>``
-        Set AVOptions on the SwrContext or AVAudioResampleContext. These should
-        be documented by FFmpeg or Libav.
+        Set AVOptions on the SwrContext. These should be documented by FFmpeg.
 
 ``lavcac3enc[=options]``
     Encode multi-channel audio to AC-3 at runtime using libavcodec. Supports

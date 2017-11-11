@@ -1254,7 +1254,7 @@ Audio
     .. admonition:: Examples
 
         ``--ad=mp3float``
-            Prefer the FFmpeg/Libav ``mp3float`` decoder over all other MP3
+            Prefer the FFmpeg ``mp3float`` decoder over all other MP3
             decoders.
 
         ``--ad=help``
@@ -3864,11 +3864,11 @@ Network
 
 ``--tls-ca-file=<filename>``
     Certificate authority database file for use with TLS. (Silently fails with
-    older FFmpeg or Libav versions.)
+    older FFmpeg version.)
 
 ``--tls-verify``
     Verify peer certificates when using TLS (e.g. with ``https://...``).
-    (Silently fails with older FFmpeg or Libav versions.)
+    (Silently fails with older FFmpeg version.)
 
 ``--tls-cert-file``
     A file containing a certificate to use in the handshake with the
@@ -3882,7 +3882,7 @@ Network
 
 ``--network-timeout=<seconds>``
     Specify the network timeout in seconds. This affects at least HTTP. The
-    special value 0 (default) uses the FFmpeg/Libav defaults. If a protocol
+    special value 0 (default) uses the FFmpeg defaults. If a protocol
     is used which does not support timeouts, this option is silently ignored.
 
 ``--rtsp-transport=<lavf|udp|tcp|http>``
