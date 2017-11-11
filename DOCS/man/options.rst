@@ -2866,7 +2866,9 @@ Demuxer
     is useful only if the ``--demuxer-seekable-cache`` option is enabled.
     Unlike the forward cache, there is no control how many seconds are actually
     cached - it will simply use as much memory this option allows. Setting this
-    option to 0 will strictly disable any back buffer.
+    option to 0 will strictly disable any back buffer, but this will lead to
+    the situation that the forward seek range starts after the current playback
+    position (as it removes past packets that are seek points).
 
     Keep in mind that other buffers in the player (like decoders) will cause the
     demuxer to cache "future" frames in the back buffer, which can skew the
@@ -2874,18 +2876,23 @@ Demuxer
 
     See ``--list-options`` for defaults and value range.
 
-``--demuxer-seekable-cache=<yes|no>``
-    This controls whether seeking can use the demuxer cache (default: no). If
+``--demuxer-seekable-cache=<yes|no|auto>``
+    This controls whether seeking can use the demuxer cache (default: auto). If
     enabled, short seek offsets will not trigger a low level demuxer seek
     (which means for example that slow network round trips or FFmpeg seek bugs
     can be avoided). If a seek cannot happen within the cached range, a low
-    level seek will be triggered. Seeking outside of the cache will always
-    discard the full cache.
+    level seek will be triggered. Seeking outside of the cache will start a new
+    cached range, but can discard the old cache range if the demuxer exhibits
+    certain unsupported behavior.
 
     Keep in mind that some events can flush the cache or force a low level
-    seek anyway, such as switching tracks, or attmepting to seek before the
+    seek anyway, such as switching tracks, or attempting to seek before the
     start or after the end of the file. This option is experimental - thus
     disabled, and bugs are to be expected.
+
+    The special value ``auto`` means ``yes`` in the same situation as
+    ``--cache-secs`` is used (i.e. when the stream appears to be a network
+    stream or the stream cache is enabled).
 
 ``--demuxer-thread=<yes|no>``
     Run the demuxer in a separate thread, and let it prefetch a certain amount
@@ -3815,7 +3822,7 @@ Cache
 ``--cache-secs=<seconds>``
     How many seconds of audio/video to prefetch if the cache is active. This
     overrides the ``--demuxer-readahead-secs`` option if and only if the cache
-    is enabled and the value is larger. (Default: 10.)
+    is enabled and the value is larger. (Default: 120.)
 
 ``--cache-pause``, ``--no-cache-pause``
     Whether the player should automatically pause when the cache runs low,
