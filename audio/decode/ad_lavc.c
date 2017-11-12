@@ -100,10 +100,7 @@ static int init(struct dec_audio *da, const char *decoder)
     ctx->avframe = av_frame_alloc();
     lavc_context->codec_type = AVMEDIA_TYPE_AUDIO;
     lavc_context->codec_id = lavc_codec->id;
-
-#if LIBAVCODEC_VERSION_MICRO >= 100
     lavc_context->pkt_timebase = ctx->codec_timebase;
-#endif
 
     if (opts->downmix && mpopts->audio_output_channels.num_chmaps == 1) {
         lavc_context->request_channel_layout =
@@ -114,10 +111,8 @@ static int init(struct dec_audio *da, const char *decoder)
     av_opt_set_double(lavc_context, "drc_scale", opts->ac3drc,
                       AV_OPT_SEARCH_CHILDREN);
 
-#if LIBAVCODEC_VERSION_MICRO >= 100
     // Let decoder add AV_FRAME_DATA_SKIP_SAMPLES.
     av_opt_set(lavc_context, "flags2", "+skip_manual", AV_OPT_SEARCH_CHILDREN);
-#endif
 
     mp_set_avopts(da->log, lavc_context, opts->avopts);
 
@@ -206,10 +201,8 @@ static bool receive_frame(struct dec_audio *da, struct mp_aframe **out)
         MP_ERR(da, "Error decoding audio.\n");
     }
 
-#if LIBAVCODEC_VERSION_MICRO >= 100
     if (priv->avframe->flags & AV_FRAME_FLAG_DISCARD)
         av_frame_unref(priv->avframe);
-#endif
 
     if (!priv->avframe->buf[0])
         return true;
@@ -229,7 +222,6 @@ static bool receive_frame(struct dec_audio *da, struct mp_aframe **out)
 
     priv->next_pts = mp_aframe_end_pts(mpframe);
 
-#if LIBAVCODEC_VERSION_MICRO >= 100
     AVFrameSideData *sd =
         av_frame_get_side_data(priv->avframe, AV_FRAME_DATA_SKIP_SAMPLES);
     if (sd && sd->size >= 10) {
@@ -237,7 +229,6 @@ static bool receive_frame(struct dec_audio *da, struct mp_aframe **out)
         priv->skip_samples += AV_RL32(d + 0);
         priv->trim_samples += AV_RL32(d + 4);
     }
-#endif
 
     if (!priv->preroll_done) {
         // Skip only if this isn't already handled by AV_FRAME_DATA_SKIP_SAMPLES.

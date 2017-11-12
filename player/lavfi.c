@@ -46,11 +46,6 @@
 
 #include "lavfi.h"
 
-#if LIBAVFILTER_VERSION_MICRO < 100
-#define av_buffersink_get_frame_flags(a, b, c) av_buffersink_get_frame(a, b)
-#define AV_BUFFERSINK_FLAG_NO_REQUEST 0
-#endif
-
 struct lavfi {
     struct mp_log *log;
     char *graph_string;
@@ -495,13 +490,11 @@ error:
 
 static void dump_graph(struct lavfi *c)
 {
-#if LIBAVFILTER_VERSION_MICRO >= 100
     MP_VERBOSE(c, "Filter graph:\n");
     char *s = avfilter_graph_dump(c->graph, NULL);
     if (s)
         MP_VERBOSE(c, "%s\n", s);
     av_free(s);
-#endif
 }
 
 void lavfi_pad_set_hwdec_devs(struct lavfi_pad *pad,
@@ -559,10 +552,8 @@ static void feed_input_pads(struct lavfi *c)
         pad->input_needed = false;
         pad->input_eof |= !pad->connected;
 
-#if LIBAVFILTER_VERSION_MICRO >= 100
         if (!av_buffersrc_get_nb_failed_requests(pad->buffer))
             continue;
-#endif
 
         if (c->draining_recover_eof || c->draining_new_format)
             continue;

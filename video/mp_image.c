@@ -25,10 +25,7 @@
 #include <libavutil/hwcontext.h>
 #include <libavutil/rational.h>
 #include <libavcodec/avcodec.h>
-
-#if LIBAVUTIL_VERSION_MICRO >= 100
 #include <libavutil/mastering_display_metadata.h>
-#endif
 
 #include "mpv_talloc.h"
 
@@ -872,7 +869,6 @@ struct mp_image *mp_image_from_av_frame(struct AVFrame *src)
         dst->params.stereo_out = p->stereo_out;
     }
 
-#if LIBAVUTIL_VERSION_MICRO >= 100
     sd = av_frame_get_side_data(src, AV_FRAME_DATA_ICC_PROFILE);
     if (sd)
         dst->icc_profile = av_buffer_ref(sd->buf);
@@ -891,7 +887,6 @@ struct mp_image *mp_image_from_av_frame(struct AVFrame *src)
         if (mdm->has_luminance)
             dst->params.color.sig_peak = av_q2d(mdm->max_luminance) / MP_REF_WHITE;
     }
-#endif
 
     if (dst->hwctx) {
         AVHWFramesContext *fctx = (void *)dst->hwctx->data;
@@ -959,15 +954,12 @@ struct AVFrame *mp_image_to_av_frame(struct mp_image *src)
         abort();
     *(struct mp_image_params *)dst->opaque_ref->data = src->params;
 
-#if LIBAVUTIL_VERSION_MICRO >= 100
     if (src->icc_profile) {
-        AVFrameSideData *sd =
-            ffmpeg_garbage(dst, AV_FRAME_DATA_ICC_PROFILE, new_ref->icc_profile);
+        AVFrameSideData *sd = mp_create_side_data_from_buf(dst, AV_FRAME_DATA_ICC_PROFILE, new_ref->icc_profile);
         if (!sd)
             abort();
         new_ref->icc_profile = NULL;
     }
-#endif
 
     talloc_free(new_ref);
 

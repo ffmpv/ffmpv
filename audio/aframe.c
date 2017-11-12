@@ -114,11 +114,8 @@ struct mp_aframe *mp_aframe_from_avframe(struct AVFrame *av_frame)
     frame->format = format;
     mp_chmap_from_lavc(&frame->chmap, frame->av_frame->channel_layout);
 
-#if LIBAVUTIL_VERSION_MICRO >= 100
-    // FFmpeg being a stupid POS again
     if (frame->chmap.num != frame->av_frame->channels)
         mp_chmap_from_channels(&frame->chmap, av_frame->channels);
-#endif
 
     return frame;
 }
@@ -172,10 +169,7 @@ void mp_aframe_config_copy(struct mp_aframe *dst, struct mp_aframe *src)
     dst->av_frame->sample_rate = src->av_frame->sample_rate;
     dst->av_frame->format = src->av_frame->format;
     dst->av_frame->channel_layout = src->av_frame->channel_layout;
-#if LIBAVUTIL_VERSION_MICRO >= 100
-    // FFmpeg being a stupid POS again
     dst->av_frame->channels = src->av_frame->channels;
-#endif
 }
 
 // Copy "soft" attributes from src to dst, excluding things which affect
@@ -288,10 +282,7 @@ bool mp_aframe_set_chmap(struct mp_aframe *frame, struct mp_chmap *in)
         return false;
     frame->chmap = *in;
     frame->av_frame->channel_layout = lavc_layout;
-#if LIBAVUTIL_VERSION_MICRO >= 100
-    // FFmpeg being a stupid POS again
     frame->av_frame->channels = frame->chmap.num;
-#endif
     return true;
 }
 

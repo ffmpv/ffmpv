@@ -31,8 +31,6 @@
 #include "misc/bstr.h"
 #include "sd.h"
 
-#define HAVE_AV_WEBVTT (LIBAVCODEC_VERSION_MICRO >= 100)
-
 struct lavc_conv {
     struct mp_log *log;
     AVCodecContext *avctx;
@@ -92,9 +90,7 @@ struct lavc_conv *lavc_conv_create(struct mp_log *log, const char *codec_name,
     av_dict_free(&opts);
     // Documented as "set by libavcodec", but there is no other way
     avctx->time_base = (AVRational) {1, 1000};
-#if LIBAVCODEC_VERSION_MICRO >= 100
     avctx->pkt_timebase = avctx->time_base;
-#endif
     priv->avctx = avctx;
     priv->extradata = talloc_strndup(priv, avctx->subtitle_header,
                                      avctx->subtitle_header_size);
@@ -113,8 +109,6 @@ char *lavc_conv_get_extradata(struct lavc_conv *priv)
 {
     return priv->extradata;
 }
-
-#if HAVE_AV_WEBVTT
 
 // FFmpeg WebVTT packets are pre-parsed in some way. The FFmpeg Matroska
 // demuxer does this on its own. In order to free our demuxer_mkv.c from
@@ -216,15 +210,6 @@ static int parse_webvtt(AVPacket *in, AVPacket *pkt)
     pkt->duration = in->duration;
     return 0;
 }
-
-#else
-
-static int parse_webvtt(AVPacket *in, AVPacket *pkt)
-{
-    return -1;
-}
-
-#endif
 
 // Return a NULL-terminated list of ASS event lines.
 char **lavc_conv_decode(struct lavc_conv *priv, struct demux_packet *packet)

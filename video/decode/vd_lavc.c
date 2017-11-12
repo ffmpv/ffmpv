@@ -571,10 +571,7 @@ static void init_avctx(struct dec_video *vd, const char *decoder,
         goto error;
     avctx->codec_type = AVMEDIA_TYPE_VIDEO;
     avctx->codec_id = lavc_codec->id;
-
-#if LIBAVCODEC_VERSION_MICRO >= 100
     avctx->pkt_timebase = ctx->codec_timebase;
-#endif
 
     ctx->pic = av_frame_alloc();
     if (!ctx->pic)
@@ -1048,11 +1045,8 @@ static bool decode_frame(struct dec_video *vd)
     assert(mpi->planes[0] || mpi->planes[3]);
     mpi->pts = mp_pts_from_av(ctx->pic->pts, &ctx->codec_timebase);
     mpi->dts = mp_pts_from_av(ctx->pic->pkt_dts, &ctx->codec_timebase);
-
-#if LIBAVCODEC_VERSION_MICRO >= 100
     mpi->pkt_duration =
         mp_pts_from_av(ctx->pic->pkt_duration, &ctx->codec_timebase);
-#endif
 
     av_frame_unref(ctx->pic);
 

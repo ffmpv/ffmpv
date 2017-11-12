@@ -52,17 +52,6 @@
 #include "vf.h"
 #include "vf_lavfi.h"
 
-// FFmpeg and Libav have slightly different APIs, just enough to cause us
-// unnecessary pain. <Expletive deleted.>
-#if LIBAVFILTER_VERSION_MICRO < 100
-#define graph_parse(graph, filters, inputs, outputs, log_ctx) \
-    avfilter_graph_parse(graph, filters, inputs, outputs, log_ctx)
-#define avfilter_graph_send_command(a, b, c, d, e, f, g) -1
-#else
-#define graph_parse(graph, filters, inputs, outputs, log_ctx) \
-    avfilter_graph_parse_ptr(graph, filters, &(inputs), &(outputs), log_ctx)
-#endif
-
 struct vf_priv_s {
     // Single filter bridge, instead of a graph.
     bool is_bridge;
@@ -202,7 +191,7 @@ static bool recreate_graph(struct vf_instance *vf, struct mp_image_params *fmt)
         inputs->name    = av_strdup("out");
         inputs->filter_ctx = out;
 
-        if (graph_parse(graph, p->cfg_graph, inputs, outputs, NULL) < 0)
+        if (avfilter_graph_parse_ptr(graph, p->cfg_graph, &inputs, &outputs, NULL) < 0)
             goto error;
     }
 
@@ -272,12 +261,7 @@ static int reconfig(struct vf_instance *vf, struct mp_image_params *in,
     out->p_h = l_out->sample_aspect_ratio.den;
     out->imgfmt = pixfmt2imgfmt(l_out->format);
     av_buffer_unref(&vf->out_hwframes_ref);
-#if LIBAVFILTER_VERSION_INT >= AV_VERSION_INT(6, 69, 100) && \
-    LIBAVFILTER_VERSION_MICRO >= 100
     AVBufferRef *hw_frames_ctx = av_buffersink_get_hw_frames_ctx(p->out);
-#else
-    AVBufferRef *hw_frames_ctx = l_out->hw_frames_ctx;
-#endif
     if (hw_frames_ctx) {
         AVHWFramesContext *fctx = (void *)hw_frames_ctx->data;
         out->hw_subfmt = pixfmt2imgfmt(fctx->sw_format);
@@ -321,13 +305,11 @@ static struct mp_image *av_to_mp(struct vf_instance *vf, AVFrame *av_frame)
 
 static void get_metadata_from_av_frame(struct vf_instance *vf, AVFrame *frame)
 {
-#if LIBAVUTIL_VERSION_MICRO >= 100
     struct vf_priv_s *p = vf->priv;
     if (!p->metadata)
         p->metadata = talloc_zero(p, struct mp_tags);
 
     mp_tags_copy_from_av_dictionary(p->metadata, frame->metadata);
-#endif
 }
 
 static int filter_ext(struct vf_instance *vf, struct mp_image *mpi)

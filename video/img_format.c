@@ -345,10 +345,8 @@ enum mp_component_type mp_imgfmt_get_component_type(int imgfmt)
     if (!pixdesc)
         return MP_COMPONENT_TYPE_UNKNOWN;
 
-#if LIBAVUTIL_VERSION_MICRO >= 100
     if (pixdesc->flags & AV_PIX_FMT_FLAG_FLOAT)
         return MP_COMPONENT_TYPE_FLOAT;
-#endif
 
     return MP_COMPONENT_TYPE_UINT;
 }
@@ -441,10 +439,8 @@ bool mp_get_regular_imgfmt(struct mp_regular_imgfmt *dst, int imgfmt)
     res.chroma_w = 1 << pixdesc->log2_chroma_w;
     res.chroma_h = 1 << pixdesc->log2_chroma_h;
 
-#if LIBAVUTIL_VERSION_MICRO >= 100
     if (pixdesc->flags & AV_PIX_FMT_FLAG_BAYER)
         return false; // it's satan himself
-#endif
 
     if (!validate_regular_imgfmt(&res))
         return false;

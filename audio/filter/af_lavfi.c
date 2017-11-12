@@ -44,17 +44,6 @@
 
 #include "options/m_option.h"
 
-// FFmpeg and Libav have slightly different APIs, just enough to cause us
-// unnecessary pain. <Expletive deleted.>
-#if LIBAVFILTER_VERSION_MICRO < 100
-#define graph_parse(graph, filters, inputs, outputs, log_ctx) \
-    avfilter_graph_parse(graph, filters, inputs, outputs, log_ctx)
-#define avfilter_graph_send_command(a, b, c, d, e, f, g) -1
-#else
-#define graph_parse(graph, filters, inputs, outputs, log_ctx) \
-    avfilter_graph_parse_ptr(graph, filters, &(inputs), &(outputs), log_ctx)
-#endif
-
 struct priv {
     // Single filter bridge, instead of a graph.
     bool is_bridge;
@@ -164,7 +153,7 @@ static bool recreate_graph(struct af_instance *af, struct mp_audio *config)
         inputs->name = av_strdup("out");
         inputs->filter_ctx = out;
 
-        if (graph_parse(graph, p->cfg_graph, inputs, outputs, NULL) < 0)
+        if (avfilter_graph_parse_ptr(graph, p->cfg_graph, &inputs, &outputs, NULL) < 0)
             goto error;
     }
 
@@ -260,13 +249,11 @@ static int control(struct af_instance *af, int cmd, void *arg)
 
 static void get_metadata_from_av_frame(struct af_instance *af, AVFrame *frame)
 {
-#if LIBAVUTIL_VERSION_MICRO >= 100
     struct priv *p = af->priv;
     if (!p->metadata)
         p->metadata = talloc_zero(p, struct mp_tags);
 
     mp_tags_copy_from_av_dictionary(p->metadata, frame->metadata);
-#endif
 }
 
 static int filter_frame(struct af_instance *af, struct mp_audio *data)
