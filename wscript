@@ -691,11 +691,6 @@ video_output_features = [
         'deps': 'vaapi-x-egl || vaapi-wayland',
         'func': check_true,
     }, {
-        'name': '--caca',
-        'desc': 'CACA',
-        'deps': 'gpl',
-        'func': check_pkg_config('caca', '>= 0.99.beta18'),
-    }, {
         'name': '--jpeg',
         'desc': 'JPEG support',
         'func': check_cc(header_name=['stdio.h', 'jpeglib.h'],

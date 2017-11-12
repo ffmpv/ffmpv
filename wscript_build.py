@@ -432,7 +432,6 @@ def build(ctx):
         ( "video/out/opengl/hwdec_vdpau.c",      "vdpau-gl-x11" ),
         ( "video/out/vo.c" ),
         ( "video/out/vo_mediacodec_embed.c",     "android" ),
-        ( "video/out/vo_caca.c",                 "caca" ),
         ( "video/out/vo_drm.c",                  "drm" ),
         ( "video/out/vo_direct3d.c",             "direct3d" ),
         ( "video/out/vo_image.c" ),

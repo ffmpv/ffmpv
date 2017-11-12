@@ -56,7 +56,6 @@ extern const struct vo_driver video_out_opengl_cb;
 extern const struct vo_driver video_out_null;
 extern const struct vo_driver video_out_image;
 extern const struct vo_driver video_out_lavc;
-extern const struct vo_driver video_out_caca;
 extern const struct vo_driver video_out_drm;
 extern const struct vo_driver video_out_direct3d;
 extern const struct vo_driver video_out_sdl;
@@ -95,9 +94,6 @@ const struct vo_driver *const video_out_drivers[] =
     // should not be auto-selected
     &video_out_image,
     &video_out_tct,
-#if HAVE_CACA
-    &video_out_caca,
-#endif
 #if HAVE_DRM
     &video_out_drm,
 #endif

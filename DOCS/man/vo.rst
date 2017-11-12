@@ -373,11 +373,6 @@ Available video output drivers are:
         Simulate display FPS. This artificially limits how many frames the
         VO accepts per second.
 
-``caca``
-    Color ASCII art video output driver that works on a text console.
-
-    .. note:: This driver is a joke.
-
 ``tct``
     Color Unicode art video output driver that works on a text console.
     Depends on support of true color by modern terminals to display the images

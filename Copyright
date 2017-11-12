@@ -45,7 +45,7 @@ them quite central:
 - Linux TV input
 - the add/cycle and sub-add/audio-add/sub-remove/audio-remove commands
 - video format conversion (if not supported by the VO)
-- minor features: jack, DVD, CDDA, SMB, CACA, legacy direct3d VO
+- minor features: jack, DVD, CDDA, SMB, legacy direct3d VO
 Some of these will be fixed in the future. The lack of the add/cycle commands
 makes this particularly useless for CLI mode, and most of the appeal of LGPL
 is for libmpv anyway. Thus it's not recommended to build mpv CLI in LGPL mode
@@ -77,7 +77,6 @@ The following files are still GPL only (--enable-lgpl disables them):
     stream/stream_tv.c              will stay GPL
     stream/tv*                      will stay GPL
     video/out/opengl/hwdec_vaglx.c  GPL
-    video/out/vo_caca.c             unknown
     video/out/vo_direct3d.c         unknown
     video/out/vo_vaapi.c            probably impossible (some company's code)
     video/out/vo_vdpau.c            probably impossible (nVidia's code)
