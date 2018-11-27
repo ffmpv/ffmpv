@@ -34,6 +34,9 @@
 #include "video/mp_image.h"
 #include "video/out/vo.h"
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS 1
+#include "cimgui.h"
+
 // definitions used internally by the core player code
 
 enum stop_play_reason {
@@ -223,6 +226,14 @@ enum playback_status {
     STATUS_EOF,         // playback has ended, or is disabled
 };
 
+struct mp_gui {
+    ImGuiContext *igctx;
+    ImGuiIO *igio;
+    ImFontAtlas *shared_font_atlas;
+    unsigned char *tex_pixels;
+    int tex_w, tex_h, tex_bpp;
+};
+
 #define NUM_PTRACKS 2
 
 typedef struct MPContext {
@@ -251,6 +262,8 @@ typedef struct MPContext {
     char *term_osd_contents;
     char *last_window_title;
     struct voctrl_playback_state vo_playback_state;
+
+    struct mp_gui gui;
 
     int add_osd_seek_info; // bitfield of enum mp_osd_seek_info
     double osd_visible; // for the osd bar only

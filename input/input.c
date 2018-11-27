@@ -61,6 +61,9 @@
 
 #define MP_MAX_KEY_DOWN 4
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS 1
+#include "cimgui.h"
+
 struct cmd_bind {
     int keys[MP_MAX_KEY_DOWN];
     int num_keys;
@@ -698,6 +701,91 @@ static bool process_wheel(struct input_ctx *ictx, int code, double *scale,
     return true;
 }
 
+static int mp_gui_get_key(struct input_ctx *ictx, int code)
+{
+    if (!igGetCurrentContext())
+        return 0;
+
+    ImGuiIO *io = igGetIO();
+
+    io->KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
+    io->KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
+    io->KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
+    io->KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
+    io->KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
+    io->KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
+
+    int unmod = code & ~MP_KEY_MODIFIER_MASK;
+
+    if (MP_KEY_IS_MOUSE_BTN_SINGLE(unmod)) {
+        int key = unmod - MP_MBTN_BASE;
+        if (key < 5 && key >= 0)
+            io->MouseDown[key] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (code & MP_KEY_MODIFIER_ALT) {
+        if (code & MP_KEY_STATE_DOWN)
+            io->KeyAlt = 1;
+    }
+
+    if (code & MP_KEY_MODIFIER_SHIFT) {
+        if (code & MP_KEY_STATE_DOWN)
+            io->KeyShift = 1;
+    }
+
+    if (code & MP_KEY_MODIFIER_CTRL) {
+        if (code & MP_KEY_STATE_DOWN)
+            io->KeyCtrl = 1;
+    }
+
+    if (unmod == MP_KEY_LEFT) {
+        io->KeysDown[ImGuiKey_LeftArrow] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod == MP_KEY_RIGHT) {
+        io->KeysDown[ImGuiKey_RightArrow] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod == MP_KEY_DOWN) {
+        io->KeysDown[ImGuiKey_DownArrow] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod == MP_KEY_UP) {
+        io->KeysDown[ImGuiKey_UpArrow] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod == MP_KEY_BACKSPACE) {
+        io->KeysDown[ImGuiKey_Backspace] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod == MP_KEY_ENTER) {
+        io->KeysDown[ImGuiKey_Enter] = code & MP_KEY_STATE_DOWN;
+    }
+
+    if (unmod >= ImGuiKey_COUNT && unmod < 256) {
+        io->KeysDown[unmod] = code & MP_KEY_STATE_DOWN;
+        if (io->WantTextInput) {
+            ImGuiIO_AddInputCharacter(io, unmod);
+        }
+    }
+
+    if (code == MP_INPUT_RELEASE_ALL) {
+        io->KeyCtrl = 0;
+        io->KeyShift = 0;
+        io->KeyAlt = 0;
+        ImGuiIO_ClearInputCharacters(io);
+        for (int i = 0; i < 256; i++) {
+            io->KeysDown[i] = 0;
+        }
+    }
+
+    if (io->WantCaptureKeyboard ||
+        io->WantCaptureMouse ||
+        io->WantTextInput)
+        return 1;
+    return 0;
+}
+
 static void mp_input_feed_key(struct input_ctx *ictx, int code, double scale,
                               bool force_mouse)
 {
@@ -705,6 +793,7 @@ static void mp_input_feed_key(struct input_ctx *ictx, int code, double scale,
 
     code = mp_normalize_keycode(code);
     int unmod = code & ~MP_KEY_MODIFIER_MASK;
+
     if (code == MP_INPUT_RELEASE_ALL) {
         MP_TRACE(ictx, "release all\n");
         release_down_cmd(ictx, false);
@@ -743,7 +832,8 @@ static void mp_input_feed_key(struct input_ctx *ictx, int code, double scale,
 void mp_input_put_key(struct input_ctx *ictx, int code)
 {
     input_lock(ictx);
-    mp_input_feed_key(ictx, code, 1, false);
+    if (!mp_gui_get_key(ictx, code))
+        mp_input_feed_key(ictx, code, 1, false);
     input_unlock(ictx);
 }
 
@@ -846,6 +936,9 @@ void mp_input_set_mouse_pos_artificial(struct input_ctx *ictx, int x, int y)
         cmd->mouse_move = true;
         cmd->mouse_x = x;
         cmd->mouse_y = y;
+        ImGuiIO *io = igGetIO();
+        io->MousePos.x = x;
+        io->MousePos.y = y;
         if (should_drop_cmd(ictx, cmd)) {
             talloc_free(cmd);
         } else {

@@ -814,6 +814,10 @@ video_output_features = [
         'deps': 'egl-x11 || mali-fbdev || rpi || gl-wayland || egl-drm || ' +
                 'egl-angle-win32 || egl-android',
         'func': check_true
+    }, {
+        'name': 'cimgui',
+        'desc': 'cImGUI',
+        'func': check_cc(lib="cimgui"),
     }
 ]
 

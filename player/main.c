@@ -62,6 +62,9 @@
 #include "command.h"
 #include "screenshot.h"
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS 1
+#include "cimgui.h"
+
 static const char def_config[] =
 #include "player/builtin_conf.inc"
 ;
@@ -435,6 +438,20 @@ int mp_initialize(struct MPContext *mpctx, char **options)
     return 0;
 }
 
+static void gui_init(struct mp_gui *gui)
+{
+    gui->shared_font_atlas = ImFontAtlas_ImFontAtlas();
+    gui->igctx = igCreateContext(gui->shared_font_atlas);
+    gui->igio = igGetIO();
+    ImFontAtlas_GetTexDataAsRGBA32(gui->shared_font_atlas, &gui->tex_pixels, &gui->tex_w, &gui->tex_h, &gui->tex_bpp);
+}
+
+static void gui_uninit(struct mp_gui *gui)
+{
+    if (gui->igctx)
+        igDestroyContext(gui->igctx);
+}
+
 int mpv_main(int argc, char *argv[])
 {
     struct MPContext *mpctx = mp_create();
@@ -445,8 +462,10 @@ int mpv_main(int argc, char *argv[])
 
     char **options = argv && argv[0] ? argv + 1 : NULL; // skips program name
     int r = mp_initialize(mpctx, options);
-    if (r == 0)
+    if (r == 0) {
+        gui_init(&mpctx->gui);
         mp_play_files(mpctx);
+    }
 
     int rc = 0;
     const char *reason = NULL;
@@ -479,6 +498,7 @@ int mpv_main(int argc, char *argv[])
     if (mpctx->has_quit_custom_rc)
         rc = mpctx->quit_custom_rc;
 
+    gui_uninit(&mpctx->gui);
     mp_destroy(mpctx);
     return rc;
 }

@@ -43,6 +43,9 @@
 #include "video/out/dither.h"
 #include "video/out/vo.h"
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS 1
+#include "cimgui.h"
+
 // scale/cscale arguments that map directly to shader filter routines.
 // Note that the convolution filters are not included in this list.
 static const char *const fixed_scale_filters[] = {
@@ -3064,6 +3067,15 @@ void gl_video_render_frame(struct gl_video *p, struct vo_frame *frame,
         struct m_color c = p->clear_color;
         float color[4] = {c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0};
         p->ra->fns->clear(p->ra, fbo.tex, color, &target_rc);
+    }
+
+    {
+        ImGuiIO *io = igGetIO();
+        if (io) {
+            ImVec2 imvec2 = { fbo.tex->params.w, fbo.tex->params.h };
+            io->DisplaySize = imvec2;
+            io->DeltaTime = 1.0f / 60.0f;
+        }
     }
 
     if (p->hwdec_overlay) {

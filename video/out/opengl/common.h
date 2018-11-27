@@ -93,8 +93,12 @@ struct GL {
     void (GLAPIENTRY *DeleteTextures)(GLsizei, const GLuint *);
     void (GLAPIENTRY *ClearColor)(GLclampf, GLclampf, GLclampf, GLclampf);
     void (GLAPIENTRY *Enable)(GLenum);
+    bool (GLAPIENTRY *IsEnabled)(GLenum);
     void (GLAPIENTRY *Disable)(GLenum);
     const GLubyte *(GLAPIENTRY * GetString)(GLenum);
+    void (GLAPIENTRY *BlendEquation)(GLenum);
+    void (GLAPIENTRY *BlendEquationSeparate)(GLenum, GLenum);
+    void (GLAPIENTRY *BlendFunc)(GLenum, GLenum);
     void (GLAPIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum);
     void (GLAPIENTRY *Flush)(void);
     void (GLAPIENTRY *Finish)(void);
@@ -112,6 +116,7 @@ struct GL {
                                   GLenum, GLvoid *);
     void (GLAPIENTRY *ReadBuffer)(GLenum);
     void (GLAPIENTRY *DrawArrays)(GLenum, GLint, GLsizei);
+    void (GLAPIENTRY *DrawElements)(GLenum, GLsizei, GLint, const GLvoid *);
     GLenum (GLAPIENTRY *GetError)(void);
     void (GLAPIENTRY *GetTexLevelParameteriv)(GLenum, GLint, GLenum, GLint *);
     void (GLAPIENTRY *Scissor)(GLint, GLint, GLsizei, GLsizei);
@@ -185,6 +190,8 @@ struct GL {
     void (GLAPIENTRY *UniformMatrix2fv)(GLint, GLsizei, GLboolean,
                                         const GLfloat *);
     void (GLAPIENTRY *UniformMatrix3fv)(GLint, GLsizei, GLboolean,
+                                        const GLfloat *);
+    void (GLAPIENTRY *UniformMatrix4fv)(GLint, GLsizei, GLboolean,
                                         const GLfloat *);
 
     void (GLAPIENTRY *InvalidateTexImage)(GLuint, GLint);

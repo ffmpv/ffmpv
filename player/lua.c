@@ -52,6 +52,9 @@
 #include "client.h"
 #include "libmpv/client.h"
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS 1
+#include "cimgui.h"
+
 // List of builtin modules and their contents as strings.
 // All these are generated from player/lua/*.lua
 static const char * const builtin_lua_scripts[][2] = {
@@ -1052,6 +1055,194 @@ static int script_get_wakeup_pipe(lua_State *L)
     return 1;
 }
 
+static int script_redraw(lua_State *L)
+{
+    struct MPContext *mpctx = get_mpctx(L);
+    vo_redraw(mpctx->video_out);
+    return 0;
+}
+
+static int gui_valid(void)
+{
+    if (igGetCurrentContext()) {
+        ImGuiIO *io = igGetIO();
+        if (io->DisplaySize.x > 0 &&
+            io->DisplaySize.y > 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+static int script_gui_new_frame(lua_State *L)
+{
+    if (gui_valid()) {
+        igNewFrame();
+    }
+    return 0;
+}
+
+static int script_gui_end_frame(lua_State *L)
+{
+    if (gui_valid()) {
+        igEndFrame();
+        igRender();
+    }
+    return 0;
+}
+
+static int script_gui_begin_main_menu_bar(lua_State *L)
+{
+    bool r = 0;
+
+    if (gui_valid())
+        r = igBeginMainMenuBar();
+    lua_pushboolean(L, r);
+    return 1;
+}
+
+static int script_gui_end_main_menu_bar(lua_State *L)
+{
+    igEndMainMenuBar();
+    return 0;
+}
+
+static int script_gui_begin_menu(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    const bool enabled = luaL_checkinteger(L, 2);
+    bool r = igBeginMenu(label, enabled);
+    lua_pushboolean(L, r);
+    return 1;
+}
+
+static int script_gui_end_menu(lua_State *L)
+{
+    igEndMenu();
+    return 0;
+}
+
+static int script_gui_menu_item_bool(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    const bool selected = luaL_checkinteger(L, 2);
+    const bool enabled = luaL_checkinteger(L, 3);
+    bool r = igMenuItemBool(label, NULL, selected, enabled);
+    lua_pushboolean(L, r);
+    return 1;
+}
+
+static int script_gui_set_next_window_bg_alpha(lua_State *L)
+{
+    const float alpha = luaL_checknumber(L, 1);
+    if (igGetCurrentContext())
+        igSetNextWindowBgAlpha(alpha);
+    return 0;
+}
+
+static int script_gui_begin(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    bool open = luaL_checkinteger(L, 2);
+    bool r = igBegin(name, &open, ImGuiWindowFlags_NoCollapse |
+                                  ImGuiWindowFlags_AlwaysAutoResize);
+    lua_pushboolean(L, r);
+    lua_pushboolean(L, open);
+    return 2;
+}
+
+static int script_gui_end(lua_State *L)
+{
+    igEnd();
+    return 0;
+}
+
+static int script_gui_slider_float(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    float v = luaL_checknumber(L, 2);
+    const float min = luaL_checknumber(L, 3);
+    const float max = luaL_checknumber(L, 4);
+
+    igSliderFloat(label, &v, min, max, "%.4f", 1.0);
+    lua_pushnumber(L, v);
+    return 1;
+}
+
+static int script_gui_slider_int(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    int v = luaL_checkinteger(L, 2);
+    const int min = luaL_checkinteger(L, 3);
+    const int max = luaL_checkinteger(L, 4);
+
+    igSliderInt(label, &v, min, max, NULL);
+    lua_pushinteger(L, v);
+    return 1;
+}
+
+static int script_gui_drag_float(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    float v = luaL_checknumber(L, 2);
+    const float speed = luaL_checknumber(L, 3);
+    const float min = luaL_checknumber(L, 4);
+    const float max = luaL_checknumber(L, 5);
+
+    igDragFloat(label, &v, speed, min, max, "%.4f", 1.f);
+    lua_pushnumber(L, v);
+    return 1;
+}
+
+static int script_gui_drag_int(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    int v = luaL_checkinteger(L, 2);
+    const float speed = luaL_checknumber(L, 3);
+    const int min = luaL_checkinteger(L, 4);
+    const int max = luaL_checkinteger(L, 5);
+
+    igDragInt(label, &v, speed, min, max, "%d");
+    lua_pushinteger(L, v);
+    return 1;
+}
+
+static int script_gui_button(lua_State *L)
+{
+    const char *label = luaL_checkstring(L, 1);
+    const float x = luaL_checknumber(L, 2);
+    const float y = luaL_checknumber(L, 3);
+    ImVec2 vec2 = {x, y};
+    bool r = igButton(label, vec2);
+    lua_pushboolean(L, r);
+    return 1;
+}
+
+static int script_gui_is_item_clicked(lua_State *L)
+{
+    const int button = luaL_checkinteger(L, 1);
+    bool r = igIsItemClicked(button);
+    lua_pushboolean(L, r);
+    return 1;
+}
+
+static int script_gui_color_picker3(lua_State *L)
+{
+    float color[3];
+    bool r;
+    const char *label = luaL_checkstring(L, 1);
+
+    color[0] = luaL_checknumber(L, 2);
+    color[1] = luaL_checknumber(L, 3);
+    color[2] = luaL_checknumber(L, 4);
+    r = igColorPicker3(label, color, 0);
+    lua_pushboolean(L, r);
+    lua_pushnumber(L, color[0]);
+    lua_pushnumber(L, color[1]);
+    lua_pushnumber(L, color[2]);
+    return 4;
+}
+
 static int script_raw_hook_add(lua_State *L)
 {
     struct script_ctx *ctx = get_ctx(L);
@@ -1359,6 +1550,24 @@ static const struct fn_entry main_fns[] = {
     FN_ENTRY(get_wakeup_pipe),
     FN_ENTRY(raw_hook_add),
     FN_ENTRY(raw_hook_continue),
+    FN_ENTRY(redraw),
+    FN_ENTRY(gui_new_frame),
+    FN_ENTRY(gui_end_frame),
+    FN_ENTRY(gui_begin_main_menu_bar),
+    FN_ENTRY(gui_end_main_menu_bar),
+    FN_ENTRY(gui_begin_menu),
+    FN_ENTRY(gui_end_menu),
+    FN_ENTRY(gui_menu_item_bool),
+    FN_ENTRY(gui_set_next_window_bg_alpha),
+    FN_ENTRY(gui_begin),
+    FN_ENTRY(gui_end),
+    FN_ENTRY(gui_slider_float),
+    FN_ENTRY(gui_slider_int),
+    FN_ENTRY(gui_drag_int),
+    FN_ENTRY(gui_drag_float),
+    FN_ENTRY(gui_button),
+    FN_ENTRY(gui_is_item_clicked),
+    FN_ENTRY(gui_color_picker3),
     {0}
 };
 
